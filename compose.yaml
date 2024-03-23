@@ -1,0 +1,13 @@
+services:
+
+
+  server:
+    build: ./server
+    ports:
+      - "7071:7071"
+
+
+  client:
+    build: ./client
+    ports:
+      - "8080:80"
