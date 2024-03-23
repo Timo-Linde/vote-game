@@ -1,0 +1,6 @@
+{
+  "main": "src/app.js",
+  "dependencies": {
+    "ws": "^8.14.2"
+  }
+}
