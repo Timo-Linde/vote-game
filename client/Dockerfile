@@ -1,29 +1,23 @@
-# Use the official Node.js runtime as the base image
+# Build stage
 FROM node:21-alpine as build
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy the entire application code to the container
 COPY . .
-
-# Build the React app for production
 RUN npm run build
 
-# Use Nginx as the production server
+# Production stage with nginx + WebSocket proxy
 FROM nginx:alpine
 
-# Copy the built React app to Nginx's web server directory
+# Copy built React app
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Expose port 8080 for the Nginx server
-EXPOSE 8080
+# Copy nginx config that proxies WebSocket to server
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Start Nginx when the container runs
+EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]

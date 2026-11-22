@@ -1,58 +1,120 @@
-import {useState} from "react";
+import { useState, useCallback } from 'react';
 
+interface Game {
+  id: number;
+  name: string;
+  maxPlayers: number;
+  genre: string;
+}
 
-export default function VoteGame({games, sendJsonMessage}) {
+interface VoteGameProps {
+  games: Game[];
+  sendJsonMessage: (msg: { type: string; games: number[] }) => void;
+}
 
-    const [votes, setVotes] = useState(new Set())
-    const maxVotes = 3;
+const MAX_VOTES = 3;
 
-    const sendVotes = (e) => {
-        e.preventDefault();
-        sendJsonMessage({
-            type: "vote",
-            games: Array.from(votes),
-        });
-    }
+export default function VoteGame({ games, sendJsonMessage }: VoteGameProps) {
+  const [selected, setSelected] = useState<Set<number>>(new Set());
 
-     return (
-         <div className={"mt-2"}>
-             <h2 className="text-xl2">Für Spiele Voten:</h2>
-             <span className={"text-gray-500 text-sm"}>Es sind maximal 3 Votes möglich!</span>
+  const toggleGame = useCallback((id: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else if (next.size < MAX_VOTES) {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
-             {games.map(game => {
-                 const disabled =!votes.has(game.id) && votes.size >= maxVotes
-                 return <div className="mb-[0.125rem] block min-h-[1.5rem] ps-[1.5rem]" key={game.id}>
-                     <input
-                         className="relative float-left -ms-[1.5rem] me-[6px] mt-[0.15rem] h-[1.125rem] w-[1.125rem] appearance-none rounded-[0.25rem] border-[0.125rem] border-solid border-secondary-500 outline-none before:pointer-events-none before:absolute before:h-[0.875rem] before:w-[0.875rem] before:scale-0 before:rounded-full before:bg-transparent before:opacity-0 before:shadow-checkbox before:shadow-transparent before:content-[''] checked:border-primary checked:bg-primary checked:before:opacity-[0.16] checked:after:absolute checked:after:-mt-px checked:after:ms-[0.25rem] checked:after:block checked:after:h-[0.8125rem] checked:after:w-[0.375rem] checked:after:rotate-45 checked:after:border-[0.125rem] checked:after:border-l-0 checked:after:border-t-0 checked:after:border-solid checked:after:border-white checked:after:bg-transparent checked:after:content-[''] hover:cursor-pointer hover:before:opacity-[0.04] hover:before:shadow-black/60 focus:shadow-none focus:transition-[border-color_0.2s] focus:before:scale-100 focus:before:opacity-[0.12] focus:before:shadow-black/60 focus:before:transition-[box-shadow_0.2s,transform_0.2s] focus:after:absolute focus:after:z-[1] focus:after:block focus:after:h-[0.875rem] focus:after:w-[0.875rem] focus:after:rounded-[0.125rem] focus:after:content-[''] checked:focus:before:scale-100 checked:focus:before:shadow-checkbox checked:focus:before:transition-[box-shadow_0.2s,transform_0.2s] checked:focus:after:-mt-px checked:focus:after:ms-[0.25rem] checked:focus:after:h-[0.8125rem] checked:focus:after:w-[0.375rem] checked:focus:after:rotate-45 checked:focus:after:rounded-none checked:focus:after:border-[0.125rem] checked:focus:after:border-l-0 checked:focus:after:border-t-0 checked:focus:after:border-solid checked:focus:after:border-white checked:focus:after:bg-transparent disabled:opacity-60"
-                         type="checkbox"
-                         id={`checkbox_${game.id}`}
-                         checked={votes.has(game.id)}
-                         disabled={disabled}
-                         onChange={(e) => {
-                            const newSet = new Set(votes);
-                            if(newSet.has(game.id)) {
-                                newSet.delete(game.id);
-                            }
-                            else {
-                                newSet.add(game.id);
-                            }
-                            setVotes(newSet);
-                         }}/>
-                     <label
-                         className={`inline-block ps-[0.15rem] hover:cursor-pointer ${disabled ? "opacity-50" : ""}`}
-                         htmlFor={`checkbox_${game.id}`}
-                         title={disabled ? "Es sind nur 3 gleichzeitige Votes möglich!" : ""}>
-                         {game.name}
-                     </label>
-                 </div>
-             })}
-             <button
-                 type="button"
-                 className="mt-2 inline-block rounded bg-primary px-6 pb-2 pt-2.5 text-xs font-medium uppercase leading-normal text-white shadow-[0_4px_9px_-4px_#3b71ca] disabled:opacity-70 active:bg-primary-700"
-                 disabled={votes.size != maxVotes}
-                 onClick={sendVotes}>
-                 Voten!
-             </button>
-         </div>
-     )
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendJsonMessage({
+      type: 'vote',
+      games: Array.from(selected),
+    });
+  };
+
+  return (
+    <div className="card animate-fade-in">
+      <div className="mb-6">
+        <h2 className="font-display text-2xl font-bold mb-1">
+          Vote for Games
+        </h2>
+        <p className="text-gray-400 text-sm">
+          Pick up to <span className="text-neon-purple font-semibold">{MAX_VOTES}</span> games you want to play
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        {/* Game list */}
+        <div className="space-y-2 mb-6">
+          {games.map((game) => {
+            const isSelected = selected.has(game.id);
+            const disabled = !isSelected && selected.size >= MAX_VOTES;
+
+            return (
+              <div
+                key={game.id}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                className={`game-card ${isSelected ? 'game-card-selected' : ''} ${disabled ? 'opacity-40' : ''}`}
+                onClick={() => !disabled && toggleGame(game.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    !disabled && toggleGame(game.id);
+                  }
+                }}
+              >
+                {/* Checkbox indicator */}
+                <div
+                  className={`flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                    isSelected
+                      ? 'bg-neon-purple border-neon-purple'
+                      : 'border-dark-500'
+                  }`}
+                >
+                  {isSelected && (
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+
+                {/* Game info */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">{game.name}</div>
+                  <div className="text-xs text-gray-500 flex gap-2">
+                    <span className="bg-dark-600 px-2 py-0.5 rounded">{game.genre}</span>
+                    <span>👥 up to {game.maxPlayers}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Submit button */}
+        <button
+          type="submit"
+          className="btn-primary w-full text-lg py-4"
+          disabled={selected.size === 0}
+        >
+          {selected.size === 0
+            ? 'Select games to vote'
+            : selected.size === MAX_VOTES
+              ? `Submit ${MAX_VOTES} Votes!`
+              : `Submit ${selected.size} Vote${selected.size > 1 ? 's' : ''}`}
+        </button>
+
+        <p className="text-center text-xs text-gray-500 mt-3">
+          You don't need to pick all {MAX_VOTES} — vote for however many you like
+        </p>
+      </form>
+    </div>
+  );
 }
