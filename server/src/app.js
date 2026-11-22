@@ -183,8 +183,10 @@ function broadcastSuggestions() {
 function broadcastVotingResult() {
   // Aggregate votes
   const gameVoteCount = new Map();
-  for (const gameId of votes.values()) {
-    gameVoteCount.set(gameId, (gameVoteCount.get(gameId) || 0) + 1);
+  for (const gameIds of votes.values()) {
+    for (const gameId of gameIds) {
+      gameVoteCount.set(gameId, (gameVoteCount.get(gameId) || 0) + 1);
+    }
   }
 
   // Build sorted results
@@ -192,9 +194,9 @@ function broadcastVotingResult() {
     .filter(g => gameVoteCount.has(g.id))
     .map(g => ({
       game: g,
-      votes: gameVoteCount.get(g.id),
+      count: gameVoteCount.get(g.id),
     }))
-    .sort((a, b) => b.votes - a.votes);
+    .sort((a, b) => b.count - a.count);
 
   const winner = results.length > 0 ? results[0].game : null;
 
