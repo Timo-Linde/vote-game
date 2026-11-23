@@ -3,6 +3,8 @@ import { useState } from 'react';
 interface Suggestion {
   id: string;
   name: string;
+  maxPlayers?: number;
+  genre?: string;
   suggestedBy: string;
   timestamp: number;
 }
@@ -33,7 +35,13 @@ export default function AdminPanel({ sendJsonMessage, votingState, suggestions }
   };
 
   const handleApprove = (suggestionId: string) => {
-    sendJsonMessage({ type: 'admin/approveSuggestion', suggestionId, maxPlayers: 4, genre: 'Custom' });
+    const suggestion = suggestions.find((s) => s.id === suggestionId);
+    sendJsonMessage({
+      type: 'admin/approveSuggestion',
+      suggestionId,
+      maxPlayers: suggestion?.maxPlayers,
+      genre: suggestion?.genre,
+    });
   };
 
   const handleReject = (suggestionId: string) => {
@@ -144,9 +152,22 @@ export default function AdminPanel({ sendJsonMessage, votingState, suggestions }
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-sm truncate">{s.name}</div>
+                        <div className="font-semibold text-sm truncate">
+                          <a
+                            href={`https://store.steampowered.com/search/?term=${encodeURIComponent(s.name)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-neon-blue hover:underline"
+                          >
+                            {s.name}
+                          </a>
+                        </div>
                         <div className="text-xs text-gray-500 mt-1">
                           by {s.suggestedBy} · {new Date(s.timestamp).toLocaleTimeString()}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1 flex gap-2">
+                          <span className="text-neon-blue">{s.maxPlayers ?? '?'} players</span>
+                          <span className="text-neon-purple">{s.genre ?? 'Custom'}</span>
                         </div>
                       </div>
                       <div className="flex gap-1 flex-shrink-0">

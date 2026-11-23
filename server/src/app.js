@@ -315,12 +315,14 @@ wss.on('connection', ws => {
         const suggestion = {
           id: uuidv4(),
           name: message.name,
+          maxPlayers: message.maxPlayers || 4,
+          genre: message.genre || 'Custom',
           suggestedBy: playerName,
           timestamp: Date.now(),
         };
         suggestions.push(suggestion);
         broadcastSuggestions();
-        console.log(`  [💡] ${playerName} suggested "${suggestion.name}"`);
+        console.log(`  [💡] ${playerName} suggested "${suggestion.name}" (${suggestion.maxPlayers} players, ${suggestion.genre})`);
         break;
 
       // ── Admin: approve suggestion ────────────────────────────
@@ -330,8 +332,12 @@ wss.on('connection', ws => {
         if (idx === -1) return;
         const approved = suggestions[idx];
 
+        // Use suggested values, allow admin override
+        const finalMaxPlayers = message.maxPlayers ?? approved.maxPlayers ?? 4;
+        const finalGenre = message.genre ?? approved.genre ?? 'Custom';
+
         // Add to database (persistent)
-        if (addGameToDb(approved.name, message.maxPlayers || 4, message.genre || 'Custom')) {
+        if (addGameToDb(approved.name, finalMaxPlayers, finalGenre)) {
           suggestions.splice(idx, 1);
           broadcastSuggestions();
           broadcastFilteredGames();

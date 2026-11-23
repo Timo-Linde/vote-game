@@ -36,6 +36,8 @@ interface VotingResultData {
 interface Suggestion {
   id: string;
   name: string;
+  maxPlayers?: number;
+  genre?: string;
   suggestedBy: string;
   timestamp: number;
 }

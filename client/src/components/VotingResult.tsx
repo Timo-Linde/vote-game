@@ -24,7 +24,14 @@ export default function VotingResult({ votingResult }: VotingResultProps) {
           <div className="text-5xl mb-3">🏆</div>
           <p className="text-gray-400 text-sm mb-1">The crowd has spoken!</p>
           <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-neon-purple to-neon-blue bg-clip-text text-transparent">
-            {winner.name}
+            <a
+              href={`https://store.steampowered.com/search/?term=${encodeURIComponent(winner.name)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline decoration-dashed"
+            >
+              {winner.name}
+            </a>
           </h2>
           <p className="text-gray-500 text-sm mt-1">
             {results.find((r) => r.game.id === winner.id)?.count} votes
@@ -65,7 +72,14 @@ export default function VotingResult({ votingResult }: VotingResultProps) {
                       isWinner ? 'text-white' : 'text-gray-300'
                     }`}
                   >
-                    {game.name}
+                    <a
+                      href={`https://store.steampowered.com/search/?term=${encodeURIComponent(game.name)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-neon-blue hover:underline"
+                    >
+                      {game.name}
+                    </a>
                   </span>
                   <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
                     {count} vote{count !== 1 ? 's' : ''} ({pct}%)

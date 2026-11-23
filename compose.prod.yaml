@@ -1,0 +1,23 @@
+services:
+  server:
+    image: docker-registry.timo-linde.de/vote-game-server:latest
+    ports:
+      - "7071:7071"
+    environment:
+      - PORT=7071
+      - ADMIN_NAME=CoKe
+      - DB_PATH=/data/games.db
+    volumes:
+      - games-db:/data
+    restart: unless-stopped
+
+  client:
+    image: docker-registry.timo-linde.de/vote-game-client:latest
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  games-db:

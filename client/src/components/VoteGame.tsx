@@ -87,7 +87,17 @@ export default function VoteGame({ games, sendJsonMessage }: VoteGameProps) {
 
                 {/* Game info */}
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate">{game.name}</div>
+                  <div className="font-semibold truncate">
+                    <a
+                      href={`https://store.steampowered.com/search/?term=${encodeURIComponent(game.name)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-neon-blue hover:underline"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      {game.name}
+                    </a>
+                  </div>
                   <div className="text-xs text-gray-500 flex gap-2">
                     <span className="bg-dark-600 px-2 py-0.5 rounded">{game.genre}</span>
                     <span>👥 up to {game.maxPlayers}</span>

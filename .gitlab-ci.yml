@@ -1,0 +1,62 @@
+# stages:
+#   - build
+#   - push
+
+# variables:
+#   REGISTRY: docker-registry.timo-linde.de
+#   IMAGE_CLIENT: ${REGISTRY}/vote-game-client
+#   IMAGE_SERVER: ${REGISTRY}/vote-game-server
+
+# # Derive version tag from git ref
+# version_from_tag:
+#   stage: .pre
+#   image: alpine
+#   script:
+#     - apk add --no-cache bash git
+#     - |
+#       if git describe --tags --exact-match >/dev/null 2>&1; then
+#         echo "VERSION=$(git describe --tags --exact-match)" >> .env
+#       else
+#         echo "VERSION=$(git rev-parse --short HEAD)" >> .env
+#       fi
+#   artifacts:
+#     reports:
+#       dotenv: .env
+
+# build_client:
+#   stage: build
+#   image: docker:24
+#   services:
+#     - docker:24-dind
+#   script:
+#     - docker build -t ${IMAGE_CLIENT}:${VERSION} ./client
+
+# build_server:
+#   stage: build
+#   image: docker:24
+#   services:
+#     - docker:24-dind
+#   script:
+#     - docker build -t ${IMAGE_SERVER}:${VERSION} ./server
+
+# push_client:
+#   stage: push
+#   image: docker:24
+#   services:
+#     - docker:24-dind
+#   script:
+#     - echo ${REGISTRY_PASSWORD} | docker login -u ${REGISTRY_USER} --password-stdin ${REGISTRY}
+#     - docker tag ${IMAGE_CLIENT}:${VERSION} ${IMAGE_CLIENT}:latest
+#     - docker push ${IMAGE_CLIENT}:${VERSION}
+#     - docker push ${IMAGE_CLIENT}:latest
+
+# push_server:
+#   stage: push
+#   image: docker:24
+#   services:
+#     - docker:24-dind
+#   script:
+#     - echo ${REGISTRY_PASSWORD} | docker login -u ${REGISTRY_USER} --password-stdin ${REGISTRY}
+#     - docker tag ${IMAGE_SERVER}:${VERSION} ${IMAGE_SERVER}:latest
+#     - docker push ${IMAGE_SERVER}:${VERSION}
+#     - docker push ${IMAGE_SERVER}:latest
