@@ -33,7 +33,7 @@ db.exec(`
 const SEED_GAMES = [
   { name: 'Left 4 Dead 2',               maxPlayers: 4,  genre: 'Co-op Shooter' },
   { name: 'Counter-Strike 2',            maxPlayers: 10, genre: 'FPS' },
-  { name: 'Dota 2',                      maxPlayers: 10, genre: 'MOBA' },
+  { name: 'League of Legends',           maxPlayers: 10, genre: 'MOBA' },
   { name: 'Minecraft',                   maxPlayers: 16, genre: 'Sandbox' },
   { name: 'Among Us',                    maxPlayers: 15, genre: 'Party' },
   { name: 'Portal 2',                    maxPlayers: 4,  genre: 'Puzzle' },
@@ -41,31 +41,14 @@ const SEED_GAMES = [
   { name: 'Valorant',                    maxPlayers: 10, genre: 'FPS' },
   { name: 'Rocket League',               maxPlayers: 8,  genre: 'Sports' },
   { name: 'Team Fortress 2',             maxPlayers: 12, genre: 'FPS' },
-  { name: "Garry's Mod",                 maxPlayers: 32, genre: 'Sandbox' },
-  { name: 'Rust',                        maxPlayers: 100, genre: 'Survival' },
   { name: 'Dead by Daylight',            maxPlayers: 8,  genre: 'Horror' },
   { name: 'Fall Guys',                   maxPlayers: 40, genre: 'Party' },
   { name: 'Brawlhalla',                  maxPlayers: 8,  genre: 'Fighting' },
   { name: 'Human: Fall Flat',            maxPlayers: 8,  genre: 'Puzzle' },
-  { name: 'Keep Talking and Nobody Explodes', maxPlayers: 10, genre: 'Party' },
   { name: 'Jackbox Party Pack',          maxPlayers: 16, genre: 'Party' },
-  { name: 'Mario Kart 8',               maxPlayers: 8,  genre: 'Racing' },
-  { name: 'Super Smash Bros',            maxPlayers: 8,  genre: 'Fighting' },
   { name: 'Learn to Fish Together',      maxPlayers: 4,  genre: 'Party' },
   { name: 'Gamble with Your Friends',    maxPlayers: 4,  genre: 'Party' },
-  { name: 'Goat Simulator 3',            maxPlayers: 4,  genre: 'Party' },
   { name: 'Pico Park',                   maxPlayers: 8,  genre: 'Co-op' },
-  { name: 'Overcooked! 2',               maxPlayers: 4,  genre: 'Party' },
-  { name: 'Lovers in a Dangerous Spacetime', maxPlayers: 4, genre: 'Co-op' },
-  { name: 'Cuphead',                     maxPlayers: 2,  genre: 'Action' },
-  { name: 'Castle Crashers',             maxPlayers: 4,  genre: 'Action' },
-  { name: 'PlateUp!',                    maxPlayers: 4,  genre: 'Party' },
-  { name: 'Moving Out 2',                maxPlayers: 4,  genre: 'Party' },
-  { name: 'Gang Beasts',                 maxPlayers: 4,  genre: 'Party' },
-  { name: 'Buckshot Roulette',           maxPlayers: 2,  genre: 'Party' },
-  { name: 'Party Animals',               maxPlayers: 8,  genre: 'Party' },
-  { name: 'Stumble Guys',                maxPlayers: 32, genre: 'Party' },
-  { name: 'Lethal Company',              maxPlayers: 4,  genre: 'Co-op Horror' },
 ];
 
 // Seed only if table is empty
@@ -99,6 +82,17 @@ function addGameToDb(name, maxPlayers, genre) {
   } catch (e) {
     // Duplicate name or other error
     console.log(`  [!] Failed to add game "${name}": ${e.message}`);
+    return false;
+  }
+}
+
+function deleteGameById(gameId) {
+  try {
+    db.prepare('DELETE FROM games WHERE id = ?').run(gameId);
+    GAMES = loadGames();
+    return true;
+  } catch (e) {
+    console.log(`  [!] Failed to delete game id ${gameId}: ${e.message}`);
     return false;
   }
 }
@@ -369,6 +363,16 @@ wss.on('connection', ws => {
 
         broadcastSuggestions();
         console.log(`  [✗] Admin rejected "${rejected.name}"`);
+        break;
+
+      // ── Admin: delete game ───────────────────────────────────
+      case 'admin/deleteGame':
+        if (ws.metadata.name !== ADMIN_NAME) return;
+        if (deleteGameById(message.gameId)) {
+          broadcastFilteredGames();
+          broadcastAllGames();
+          console.log(`  [🗑] Admin deleted game id ${message.gameId} (${GAMES.length} remaining)`);
+        }
         break;
 
       default:

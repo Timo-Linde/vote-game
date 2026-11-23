@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { MAX_PLAYER_OPTIONS } from '../constants';
 
+interface Game {
+  id: number;
+  name: string;
+  maxPlayers: number;
+  genre: string;
+}
+
 interface Suggestion {
   id: string;
   name: string;
@@ -11,15 +18,17 @@ interface Suggestion {
 }
 
 interface AdminPanelProps {
-  sendJsonMessage: (msg: { type: string; maxPlayers?: number; suggestionId?: string; genre?: string }) => void;
+  sendJsonMessage: (msg: { type: string; maxPlayers?: number; suggestionId?: string; genre?: string; gameId?: number }) => void;
   votingState: string;
   suggestions: Suggestion[];
+  allGames: Game[];
 }
 
-export default function AdminPanel({ sendJsonMessage, votingState, suggestions }: AdminPanelProps) {
+export default function AdminPanel({ sendJsonMessage, votingState, suggestions, allGames }: AdminPanelProps) {
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showManageGames, setShowManageGames] = useState(false);
 
   const handleStart = () => {
     sendJsonMessage({ type: 'admin/startVoting', maxPlayers });
@@ -45,6 +54,10 @@ export default function AdminPanel({ sendJsonMessage, votingState, suggestions }
 
   const handleReject = (suggestionId: string) => {
     sendJsonMessage({ type: 'admin/rejectSuggestion', suggestionId });
+  };
+
+  const handleDeleteGame = (gameId: number) => {
+    sendJsonMessage({ type: 'admin/deleteGame', gameId });
   };
 
   const isIdle = votingState === 'idle';
@@ -74,6 +87,15 @@ export default function AdminPanel({ sendJsonMessage, votingState, suggestions }
             {suggestions.length}
           </span>
         )}
+      </button>
+
+      {/* Manage Games button */}
+      <button
+        type="button"
+        onClick={() => setShowManageGames(!showManageGames)}
+        className="px-2 py-1 rounded-lg text-xs font-semibold border transition-all bg-dark-700 text-gray-400 border-dark-600 hover:bg-dark-600"
+      >
+        🗑 Games ({allGames.length})
       </button>
 
       {/* Max players selector (only visible when idle) */}
@@ -186,6 +208,55 @@ export default function AdminPanel({ sendJsonMessage, votingState, suggestions }
                         </button>
                       </div>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Manage Games panel */}
+      {showManageGames && (
+        <div className="absolute right-4 top-12 w-96 bg-dark-800 border border-dark-600 rounded-xl shadow-2xl shadow-black/60 z-30 overflow-hidden">
+          <div className="p-4 border-b border-dark-600">
+            <h3 className="font-display font-bold text-sm">🗑 Manage Games</h3>
+            <p className="text-xs text-gray-500 mt-1">Delete games from the library ({allGames.length} total)</p>
+          </div>
+          <div className="max-h-80 overflow-y-auto p-2">
+            {allGames.length === 0 ? (
+              <p className="text-center text-gray-500 text-sm py-6">No games in library</p>
+            ) : (
+              <div className="space-y-1">
+                {allGames.map((g) => (
+                  <div
+                    key={g.id}
+                    className="flex items-center justify-between bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 gap-2"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-xs truncate">
+                        <a
+                          href={`https://store.steampowered.com/search/?term=${encodeURIComponent(g.name)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-neon-blue hover:underline"
+                        >
+                          {g.name}
+                        </a>
+                      </div>
+                      <div className="text-[10px] text-gray-500 mt-0.5 flex gap-2">
+                        <span className="text-neon-blue">{g.maxPlayers} players</span>
+                        <span className="text-neon-purple">{g.genre}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteGame(g.id)}
+                      className="px-2 py-1 text-xs bg-red-900/30 text-red-400 rounded hover:bg-red-900/50 transition-colors flex-shrink-0"
+                      title={`Delete ${g.name}`}
+                    >
+                      🗑
+                    </button>
                   </div>
                 ))}
               </div>

@@ -136,7 +136,7 @@ function App() {
         </div>
         <div className="flex items-center gap-4">
           <ConnectionStatus readyState={readyState} statusLabel={statusLabel[readyState]} />
-          {isAdmin && <AdminPanel sendJsonMessage={sendJsonMessage} votingState={votingState} suggestions={suggestions} />}
+          {isAdmin && <AdminPanel sendJsonMessage={sendJsonMessage} votingState={votingState} suggestions={suggestions} allGames={allGames} />}
         </div>
       </header>
 
