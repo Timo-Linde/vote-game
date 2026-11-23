@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { MAX_PLAYER_OPTIONS, GENRE_OPTIONS } from '../constants';
 
 interface Game {
   id: number;
@@ -16,6 +17,19 @@ const MAX_VOTES = 3;
 
 export default function VoteGame({ games, sendJsonMessage }: VoteGameProps) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [searchTerm, setSearchTerm] = useState('');
+  const [maxPlayersFilter, setMaxPlayersFilter] = useState<number>(0);
+  const [genreFilter, setGenreFilter] = useState<string>('');
+
+  // Filter games for display
+  const filteredGames = useMemo(() => {
+    return games.filter(game => {
+      const matchesName = game.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPlayers = maxPlayersFilter === 0 || game.maxPlayers <= maxPlayersFilter;
+      const matchesGenre = !genreFilter || game.genre === genreFilter;
+      return matchesName && matchesPlayers && matchesGenre;
+    });
+  }, [games, searchTerm, maxPlayersFilter, genreFilter]);
 
   const toggleGame = useCallback((id: number) => {
     setSelected((prev) => {
@@ -48,10 +62,95 @@ export default function VoteGame({ games, sendJsonMessage }: VoteGameProps) {
         </p>
       </div>
 
+      {/* Filters */}
+      <div className="bg-dark-900/50 rounded-xl p-4 mb-6 border border-dark-600/50">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Name search */}
+          <div className="flex-1">
+            <label className="block text-xs text-gray-500 mb-1">Search by name</label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Type to filter..."
+              className="w-full bg-dark-800 border border-dark-600 rounded-lg px-4 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-neon-purple/50 focus:ring-1 focus:ring-neon-purple/30 transition-all"
+            />
+          </div>
+
+          {/* Max players filter */}
+          <div className="sm:w-40">
+            <label className="block text-xs text-gray-500 mb-1">Max Players</label>
+            <select
+              value={maxPlayersFilter}
+              onChange={e => setMaxPlayersFilter(Number(e.target.value))}
+              className="w-full bg-dark-800 border border-dark-600 rounded-lg px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-neon-purple/50 focus:ring-1 focus:ring-neon-purple/30 transition-all"
+            >
+              <option value={0}>All</option>
+              {MAX_PLAYER_OPTIONS.map(n => (
+                <option key={n} value={n}>Up to {n}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Genre filter */}
+          <div className="sm:w-40">
+            <label className="block text-xs text-gray-500 mb-1">Category</label>
+            <select
+              value={genreFilter}
+              onChange={e => setGenreFilter(e.target.value)}
+              className="w-full bg-dark-800 border border-dark-600 rounded-lg px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-neon-purple/50 focus:ring-1 focus:ring-neon-purple/30 transition-all"
+            >
+              <option value="">All</option>
+              {GENRE_OPTIONS.map(g => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Active filters indicator */}
+        {(searchTerm || maxPlayersFilter > 0 || genreFilter) && (
+          <div className="mt-3 flex items-center gap-2 text-xs">
+            <span className="text-gray-500">Active filters:</span>
+            {searchTerm && (
+              <span className="bg-neon-blue/20 text-neon-blue px-2 py-0.5 rounded">
+                name: "{searchTerm}"
+              </span>
+            )}
+            {maxPlayersFilter > 0 && (
+              <span className="bg-neon-purple/20 text-neon-purple px-2 py-0.5 rounded">
+                ≤ {maxPlayersFilter} players
+              </span>
+            )}
+            {genreFilter && (
+              <span className="bg-neon-green/20 text-neon-green px-2 py-0.5 rounded">
+                {genreFilter}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setMaxPlayersFilter(0);
+                setGenreFilter('');
+              }}
+              className="text-gray-500 hover:text-gray-300 ml-2 underline"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
+      </div>
+
       <form onSubmit={handleSubmit}>
+        {/* Results count */}
+        <div className="text-sm text-gray-400 mb-4">
+          Showing {filteredGames.length} of {games.length} games
+        </div>
+
         {/* Game list */}
         <div className="space-y-2 mb-6">
-          {games.map((game) => {
+          {filteredGames.map((game) => {
             const isSelected = selected.has(game.id);
             const disabled = !isSelected && selected.size >= MAX_VOTES;
 

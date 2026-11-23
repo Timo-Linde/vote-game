@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MAX_PLAYER_OPTIONS } from '../constants';
 
 interface Suggestion {
   id: string;
@@ -19,8 +20,6 @@ export default function AdminPanel({ sendJsonMessage, votingState, suggestions }
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-
-  const presets = [2, 4, 8, 10, 16, 30, 40, 99];
 
   const handleStart = () => {
     sendJsonMessage({ type: 'admin/startVoting', maxPlayers });
@@ -85,13 +84,13 @@ export default function AdminPanel({ sendJsonMessage, votingState, suggestions }
             onClick={() => setShowDropdown(!showDropdown)}
             className="btn-secondary text-sm"
           >
-            Max Players: {maxPlayers === 99 ? '∞' : maxPlayers} ▾
+            Max Players: {maxPlayers} ▾
           </button>
           {showDropdown && (
             <div className="absolute right-0 top-full mt-2 bg-dark-800 border border-dark-600 rounded-xl shadow-xl shadow-black/40 z-20 overflow-hidden w-40">
               <div className="p-2">
                 <p className="text-xs text-gray-500 px-2 pb-1">Filter games by max players</p>
-                {presets.map((n) => (
+                {MAX_PLAYER_OPTIONS.map((n) => (
                   <button
                     key={n}
                     type="button"
@@ -105,7 +104,7 @@ export default function AdminPanel({ sendJsonMessage, votingState, suggestions }
                       setShowDropdown(false);
                     }}
                   >
-                    {n === 99 ? 'No limit (∞)' : `Up to ${n} players`}
+                    Up to {n} players
                   </button>
                 ))}
               </div>

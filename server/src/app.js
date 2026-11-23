@@ -166,6 +166,13 @@ function broadcastFilteredGames() {
   }
 }
 
+function broadcastAllGames() {
+  const msg = JSON.stringify({ type: 'all-games', value: GAMES });
+  for (const ws of clients.values()) {
+    if (ws.readyState === WebSocket.OPEN) ws.send(msg);
+  }
+}
+
 function broadcastMaxPlayersFilter() {
   const msg = JSON.stringify({ type: 'max-players-filter', value: maxPlayersFilter });
   for (const ws of clients.values()) {
@@ -227,6 +234,7 @@ wss.on('connection', ws => {
 
   // Send initial state
   broadcastFilteredGames();
+  broadcastAllGames();
   broadcastPlayers();
   broadcastVotingState();
   broadcastMaxPlayersFilter();
@@ -341,6 +349,7 @@ wss.on('connection', ws => {
           suggestions.splice(idx, 1);
           broadcastSuggestions();
           broadcastFilteredGames();
+          broadcastAllGames();
           console.log(`  [✓] Admin approved "${approved.name}" — added to games (${GAMES.length} total)`);
         } else {
           // Game already exists — still remove suggestion

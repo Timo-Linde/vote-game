@@ -1,14 +1,9 @@
 import { useState } from 'react';
+import { MAX_PLAYER_OPTIONS, GENRE_OPTIONS } from '../constants';
 
 interface GameSuggestionProps {
   sendJsonMessage: (msg: { type: string; name?: string; maxPlayers?: number; genre?: string }) => void;
 }
-
-const GENRE_OPTIONS = [
-  'Party', 'FPS', 'Co-op', 'MOBA', 'Sandbox', 'Puzzle',
-  'Survival', 'Horror', 'Fighting', 'Sports', 'Racing',
-  'Action', 'RPG', 'Strategy', 'Simulation', 'Custom',
-];
 
 export default function GameSuggestion({ sendJsonMessage }: GameSuggestionProps) {
   const [name, setName] = useState('');
@@ -51,7 +46,7 @@ export default function GameSuggestion({ sendJsonMessage }: GameSuggestionProps)
                 onChange={e => setMaxPlayers(Number(e.target.value))}
                 className="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-neon-purple/50 focus:ring-1 focus:ring-neon-purple/30 transition-all"
               >
-                {[2, 4, 5, 8, 10, 16, 32, 64, 100].map(n => (
+                {MAX_PLAYER_OPTIONS.map(n => (
                   <option key={n} value={n}>{n} players</option>
                 ))}
               </select>

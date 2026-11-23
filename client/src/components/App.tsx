@@ -8,6 +8,9 @@ import ConnectionStatus from './ConnectionStatus';
 import AdminPanel from './AdminPanel';
 import VotingState from './VotingState';
 import GameSuggestion from './GameSuggestion';
+import GameList from './GameList';
+
+type TabType = 'vote' | 'games';
 
 // ─── Types ──────────────────────────────────────────────────────
 interface Game {
@@ -59,7 +62,7 @@ function App() {
       reconnectInterval: 2000,
     });
 
-  const [_games, setGames] = useState<Game[]>([]);
+  const [allGames, setAllGames] = useState<Game[]>([]);
   const [filteredGames, setFilteredGames] = useState<Game[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [votingState, setVotingState] = useState<string>('idle');
@@ -67,6 +70,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>('vote');
 
   // Handle incoming messages
   useEffect(() => {
@@ -74,7 +78,10 @@ function App() {
 
     switch (lastJsonMessage.type) {
       case 'games':
-        setGames(lastJsonMessage.value);
+        setAllGames(lastJsonMessage.value);
+        break;
+      case 'all-games':
+        setAllGames(lastJsonMessage.value);
         break;
       case 'filtered-games':
         setFilteredGames(lastJsonMessage.value);
@@ -154,7 +161,60 @@ function App() {
           </div>
         )}
 
-        {/* Active voting */}
+        {/* Tab navigation (only when idle) */}
+        {votingState === 'idle' && (
+          <div className="mt-6 flex gap-1 bg-dark-800 rounded-xl p-1 border border-dark-600/50">
+            <button
+              type="button"
+              onClick={() => setActiveTab('vote')}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === 'vote'
+                  ? 'bg-neon-purple/20 text-neon-purple shadow-sm'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              🗳️ Vote
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('games')}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === 'games'
+                  ? 'bg-neon-blue/20 text-neon-blue shadow-sm'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              📋 Game Library
+            </button>
+          </div>
+        )}
+
+        {/* Vote tab content */}
+        {(votingState === 'idle' && activeTab === 'vote') && (
+          <>
+            {/* Idle state message */}
+            <div className="mt-6 text-center text-gray-500">
+              <div className="text-6xl mb-4 opacity-30">🕹️</div>
+              <p className="font-display text-lg">Waiting for the admin to start a vote...</p>
+            </div>
+
+            {/* Game suggestion (non-admin only) */}
+            {!isAdmin && (
+              <div className="mt-6 animate-fade-in">
+                <GameSuggestion sendJsonMessage={sendJsonMessage} />
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Games tab content */}
+        {votingState === 'idle' && activeTab === 'games' && (
+          <div className="mt-6 animate-fade-in">
+            <GameList games={allGames} suggestions={suggestions} />
+          </div>
+        )}
+
+        {/* Active voting (always shown when in-progress, overrides tabs) */}
         {filteredGames.length > 0 && votingState === 'in-progress' && !hasVoted && (
           <div className="mt-6 animate-slide-up">
             <VoteGame
@@ -179,21 +239,6 @@ function App() {
         {votingResult && votingState === 'ended' && (
           <div className="mt-6 animate-slide-up">
             <VotingResult votingResult={votingResult} />
-          </div>
-        )}
-
-        {/* Idle state message */}
-        {votingState === 'idle' && filteredGames.length === 0 && (
-          <div className="mt-12 text-center text-gray-500">
-            <div className="text-6xl mb-4 opacity-30">🕹️</div>
-            <p className="font-display text-lg">Waiting for the admin to start a vote...</p>
-          </div>
-        )}
-
-        {/* Game suggestion (non-admin only) */}
-        {!isAdmin && votingState === 'idle' && (
-          <div className="mt-6 animate-fade-in">
-            <GameSuggestion sendJsonMessage={sendJsonMessage} />
           </div>
         )}
       </main>
